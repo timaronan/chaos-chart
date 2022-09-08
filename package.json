@@ -1,6 +1,6 @@
 {
   "name": "d3-line-range",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "d3 v4 line chart with confidence interval",
   "keywords": [
     "d3",
