@@ -3,7 +3,6 @@ import { axisLeft as d3AxisBottom } from 'd3-axis';
 import { scaleLinear as d3ScaleLinear } from 'd3-scale';
 import { select as d3Select } from 'd3-selection';
 import { line as d3Line } from 'd3-shape';
-import { csv as d3Csv } from 'd3-fetch';
 import 'd3-transition';
 
 export default function() {
