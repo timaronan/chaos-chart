@@ -26,14 +26,6 @@ var parent = d3.select('body').call(chaos);
 
 If *layout* is specified, sets the *layout* and returns this chaos generator. If *layout* is not specified, returns the current *layout*, which defaults to:  ```{margin:{top: 100, right: 80, bottom: 100, left: 10},width:1500, height:2000}```
 
-<a name="chaos_duration" href="#chaos_duration">#</a> <i>chaos</i>.<b>duration</b>([<i>duration</i>])
-
-If *duration* is specified, sets the animation *duration* and returns this chaos generator. If *duration* is not specified, returns the current *duration*, which defaults to:  ```1000```
-
-<a name="chaos_hide" href="#chaos_hide">#</a> <i>chaos</i>.<b>hide</b>([<i>hide</i>])
-
-If *hide* is specified, sets the *hide* and returns this chaos generator. This will hide lines of a specified ID with an animation. If *hide* is not specified, returns the current *hide*, which is the hidden lines by ID, which defaults to:  ```[]```
-
 <a name="chaos_keys" href="#chaos_keys">#</a> <i>chaos</i>.<b>keys</b>([<i>{top,middle,bottom}</i>])
 
 If *keys* is specified, sets the *keys* and returns this chaos generator. If *keys* is not specified, returns the current *keys*, which are the keys for the range values, which default to:  ```{bottom:0,middle:1,top:2}```
