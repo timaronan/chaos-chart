@@ -1,1 +1,1 @@
-export {default as lineRange} from "./src/lineRange";
+export {default as chaos} from "./src/chaos";
