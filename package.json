@@ -23,17 +23,16 @@
   },
   "scripts": {
     "pretest": "rm -rf build && mkdir build && rollup -f umd -n d3 -o build/d3-chaos.js -- index.js",
-    "test": "tape 'test/lineRange-test.js'",
+    "test": "tape 'test/chaos-test.js'",
     "prepublish": "npm run test && uglifyjs build/d3-chaos.js -c -m -o build/d3-chaos.min.js",
     "postpublish": "zip -j build/d3-chaos.zip -- LICENSE README.md build/d3-chaos.js build/d3-chaos.min.js"
   },
   "dependencies": {
-    "d3-array": "1",
-    "d3-axis": "1",
-    "d3-scale": "1",
-    "d3-selection": "1",
-    "d3-shape": "1",
-    "d3-transition": "1"
+    "d3-axis": "3.0.0",
+    "d3-scale": "4.0.2",
+    "d3-selection": "3.0.0",
+    "d3-shape": "3.1.0",
+    "d3-transition": "3.0.1"
   },
   "devDependencies": {
     "rollup": "0.41",
