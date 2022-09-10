@@ -5,23 +5,21 @@ import { select as d3Select } from 'd3-selection';
 import { line as d3Line } from 'd3-shape';
 import 'd3-transition';
 
+
 export default function() {
-	//layout variables
-  	var margin = {top: 30, right: 80, bottom: 70, left: 100};
+  var margin = {top: 30, right: 80, bottom: 70, left: 100};
 	var height = 500;
 	var width = 2200;
 	var innerWidth = width - margin.left - margin.right;
 	var innerHeight = height - margin.top - margin.bottom;
 			
-	//data keys for drawing
 	var highlightKey = "";
+	var duration = 1000;
 
-	//methods
 	var updateLayout = null;
 	var updateData = null;
-	var updateKeys = null;
+	var updateKey = null;
 
-	//data stores
 	var data = [];
 	var xKey = "";
 	var xFormat = function(d){
@@ -48,13 +46,15 @@ export default function() {
 			//parent DOM variables
 			var dom = d3Select(this);
 			var svg = dom.append('svg');
+			
 			var shapes = svg.append('g').attr('class', 'shapes');
 			var labels = svg.append('g').attr('class', 'labels');
+			
 			var lines = shapes.selectAll('g.line-shape').data(data);
 			var xLabels = labels.selectAll('g.label').data(importantKeys);
+
 			var linesEnter = lines.enter().append('g');
 			var labelsEnter = xLabels.enter().append('g').attr('class', 'label');
-			var glowFilter = linesEnter.append('defs');
 
 			//axis related variables
 			var x = null;
@@ -75,8 +75,6 @@ export default function() {
 			  .attr('height', '100%')
 			  .attr('viewBox', '0 0 '+width+' '+height)
 			  .attr('preserveAspectRatio', 'xMidYMid');
-
-
 
 			//axis and scale creation
 			x = d3ScaleLinear()
@@ -99,64 +97,98 @@ export default function() {
 			  .attr('transform', 'translate('+ margin.left +',0)')
 			  .call(yAxis);
 
-			//svg shape creation
 			shapes.attr('class', 'shapes');
-
-			// Define Group Attributes
 			linesEnter
 				.attr('class', 'line-shape');
+			
+			addShapes(linesEnter);
+			addLabels(labelsEnter);
 
-			// Define Path Group Styling
-			glowFilter.append("filter")
-		        .attr("id", "glow")
-		        .attr("height", "10")
-		        .attr("width", "10").attr("x", "-5").attr("y", "-5");
-			glowFilter.append("feGaussianBlur")
-				.attr("stdDeviation", 4)
-				.attr("result", "coloredBlur");
+			function addShapes(enterContainer){
+				enterContainer.append('line')
+					.attr('class', function(d){
+						return grabKey(d) === highlightKey ? 'line highlight' : 'line';
+					})
+					.attr("x1", function(d){
+						var random = x(data.length * Math.random());
+						var center = width / 2;
+						return grabKey(d) === highlightKey ? center : random;
+					})
+					.attr("x2", xAxisPlacement)
+					.attr("y1", 0)
+					.attr("y2", innerHeight);
+				enterContainer.append('circle')
+					.attr('class', 'line-point')
+					.attr('r', 1)
+					.attr("cy", innerHeight)
+					.attr("cx", xAxisPlacement);
+			}
+			function addLabels(enterContainer){
+				enterContainer.on('mouseover', function(evt, d){
+					updateHighlight(d);
+				});
+				enterContainer.append("rect")
+					.attr('class', 'label-background')
+					.attr('x', d => x(getXAxisOffset(d)))
+					.attr('y', innerHeight)
+					.attr('height', margin.bottom)
+					.attr('width', innerWidth / importantKeys.length);
+				enterContainer.append("text")
+					.attr('class', 'label-text')
+					.attr('x', d => x(getXAxisOffset(d)) + ((innerWidth / importantKeys.length) / 2))
+					.attr('y', innerHeight + (margin.bottom/2))
+					.attr('dominant-baseline', 'middle')
+					.attr('text-anchor', 'middle')
+					.text(d => d);
+			}
 
-			filterMerge = glowFilter.append("feMerge");
-			filterMerge.append("feMergeNode")
-				.attr("in", "coloredBlur");
-			filterMerge.append("feMergeNode")
-				.attr("in", "SourceGraphic");
+			function updateShapes(updateGroup){
+				var updateLines = updateGroup.select('line.line');
+				var updatePoints = updateGroup.select('circle.line-point');
+				var shapesExit = updateGroup.exit();
+				
+				updateLines
+					.attr('class', function(d){
+						return grabKey(d) === highlightKey ? 'line highlight' : 'line';
+					})
+					.transition(duration)
+					.attr("x1", function(d){
+						var random = x(data.length * Math.random());
+						var center = width / 2;
+						return grabKey(d) === highlightKey ? center : random;
+					})
+					.attr("x2", xAxisPlacement);
 
+				updatePoints
+					.attr("cx", xAxisPlacement);
 
-			// Build Graph Paths
-			linesEnter.append('line')
-				.attr('class', function(d){
-					return grabKey(d) === highlightKey ? 'line highlight' : 'line';
-				})
-				.attr("x1", function(d){
-					var random = x(data.length * Math.random());
-					var center = width / 2;
-					return grabKey(d) === highlightKey ? center : random;
-				})
-				.attr("x2", xAxisPlacement)
-				.attr("y1", 0)
-				.attr("y2", innerHeight);
-			linesEnter.append('circle')
-				.attr('class', 'line-point')
-				.attr('r', 1)
-				.attr("cy", innerHeight)
-				.attr("cx", xAxisPlacement);
+				shapesExit.remove();
+			}
+			function updateLabels(updateContainer){
+				var updateBG = updateContainer.select('.label-background');
+				var updateText = updateContainer.select('.label-text');
+				var updateExit = updateContainer.exit();
+				
+				updateContainer.on('mouseover', function(evt, d){
+					updateHighlight(d);
+				});
 
-			labelsEnter.on('mouseover', function(evt, d){
-				updateHighlight(d);
-			});
-			labelsEnter.append("rect")
-				.attr('class', 'label-background')
-				.attr('x', d => x(getXAxisOffset(d)))
-				.attr('y', innerHeight)
-				.attr('height', margin.bottom)
-				.attr('width', innerWidth / importantKeys.length);
-			labelsEnter.append("text")
-				.attr('class', 'label-text')
-				.attr('x', d => x(getXAxisOffset(d)) + ((innerWidth / importantKeys.length) / 2))
-				.attr('y', innerHeight + (margin.bottom/2))
-				.attr('dominant-baseline', 'middle')
-				.attr('text-anchor', 'middle')
-				.text(d => d);
+				updateBG.attr('class', 'label-background')
+					.attr('x', d => x(getXAxisOffset(d)))
+					.attr('y', innerHeight)
+					.attr('height', margin.bottom)
+					.attr('width', innerWidth / importantKeys.length);
+				updateText.attr('class', 'label-text')
+					.attr('x', d => x(getXAxisOffset(d)) + ((innerWidth / importantKeys.length) / 2))
+					.attr('y', innerHeight + (margin.bottom/2))
+					.attr('dominant-baseline', 'middle')
+					.attr('text-anchor', 'middle')
+					.text(d => {
+					return d
+					});
+				
+				updateExit.remove();
+			}
 
 			function updateHighlight(key){
 				var oldKey = highlightKey;
@@ -188,142 +220,49 @@ export default function() {
 
 				return x(xAxisOffset + reducedX);
 			}
-			
 			function getXAxisOffset(d){
 				var xAxisOffset = (importantKeys.indexOf(d) / importantKeys.length) * data.length;
 				return xAxisOffset;
 			}
 
-			function updateKey(key, value, format){
-				var oldKey = highlightKey;
-				var updateLabels = null;
-				var updateBG = null;
-				var updateText = null;
-				var updateExit = null;
-				var enterLabels = null;
-
-				var updateShapes = null;
-				var updateLines = null;
-				var updatePoints = null;
-				var shapesExit = null;
-				var enterLines = null;
-
-				updateLabels = labels.selectAll('g.label').data(xValues);
-				updateBG = update.select('.label-background');
-				updateText = update.select('.label-text');
-				updateExit = update.exit();
-
-				updateShapes = labels.selectAll('g.line-shape').data(data);
-				updateLines = updateShapes.select('line.line');
-				updatePoints = updateShapes.select('circle.line-point');
-				shapesExit = updateShapes.exit();
-
-				enterLines = updateLabels.enter().append('g').attr('class', 'line-shape');
-
-				enterLines.append('line')
-					.attr('class', function(d){
-						return grabKey(d) === highlightKey ? 'line highlight' : 'line';
-					})
-					.attr("x1", function(d){
-						var random = x(data.length * Math.random());
-						var center = width / 2;
-						return grabKey(d) === highlightKey ? center : random;
-					})
-					.attr("x2", xAxisPlacement)
-					.attr("y1", 0)
-					.attr("y2", innerHeight);
-				enterLines.append('circle')
-					.attr('class', 'line-point')
-					.attr('r', 1)
-					.attr("cy", innerHeight)
-					.attr("cx", xAxisPlacement);
-
-				updateLines
-					.attr('class', function(d){
-						return grabKey(d) === highlightKey ? 'line highlight' : 'line';
-					})
-					.transition(duration)
-					.attr("x1", function(d){
-						var random = x(data.length * Math.random());
-						var center = width / 2;
-						return grabKey(d) === highlightKey ? center : random;
-					})
-					.attr("x2", xAxisPlacement);
-
-				updatePoints
-					.attr("cx", xAxisPlacement);
-
-				shapesExit.remove();
-
-				// ENTER new elements present in new data.
-				enterLabels = updateLabels.enter().append('g').attr('class', 'label');
-
-				enterLabels.on('mouseover', function(evt, d){
-					updateHighlight(d);
-				});	
-		
-				enterLabels.append("rect")
-					.attr('class', 'label-background')
-					.attr('x', d => x(getXAxisOffset(d)))
-					.attr('y', innerHeight)
-					.attr('height', margin.bottom)
-					.attr('width', innerWidth / importantKeys.length);
-				enterLabels.append("text")
-					.attr('class', 'label-text')
-					.attr('x', d => x(getXAxisOffset(d)) + ((innerWidth / importantKeys.length) / 2))
-					.attr('y', innerHeight + (margin.bottom/2))
-					.attr('dominant-baseline', 'middle')
-					.attr('text-anchor', 'middle')
-					.text(d => d);
-
-				// UPDATE old elements present in new data.
-				updateLabels.on('mouseover', function(evt, d){
-					updateHighlight(d);
-				});
-
-				// Define Path Group Styling
-				updateBG.attr('class', 'label-background')
-					.attr('x', d => x(getXAxisOffset(d)))
-					.attr('y', innerHeight)
-					.attr('height', margin.bottom)
-					.attr('width', innerWidth / importantKeys.length);
-				updateText.attr('class', 'label-text')
-					.attr('x', d => x(getXAxisOffset(d)) + ((innerWidth / importantKeys.length) / 2))
-					.attr('y', innerHeight + (margin.bottom/2))
-					.attr('dominant-baseline', 'middle')
-					.attr('text-anchor', 'middle')
-					.text(d => {
-					return d
-					});
+			updateKey = function(){
+				var updateLabelGroup = labels.selectAll('g.label').data(importantKeys);
+				var updateShapeGroup = shapes.selectAll('g.line-shape').data(data);
 				
-				updateExit.remove();
+				linesEnter = updateShapeGroup.enter().append('g').attr('class', 'line-shape');
+				labelsEnter = updateLabelGroup.enter().append('g').attr('class', 'label');
+
+				addShapes(linesEnter);
+				addLabels(labelsEnter);
 				
+				updateShapes(updateShapeGroup);
+				updateLabels(updateLabelGroup);
 			}
 
 		});
 	}
 
   	chaos.layout = function(value) {
-		if (!arguments.length) return {height:height,width:width,margin:margin};
-		height = value.height || height;
-		width = value.width || width;
-		margin = value.margin || margin;
-		innerWidth = width - margin.left - margin.right;
-		innerHeight = height - margin.top - margin.bottom;
-		if (typeof updateLayout === 'function') updateLayout();
-		return chaos;
-	};
+			if (!arguments.length) return {height:height,width:width,margin:margin};
+			height = value.height || height;
+			width = value.width || width;
+			margin = value.margin || margin;
+			innerWidth = width - margin.left - margin.right;
+			innerHeight = height - margin.top - margin.bottom;
+			if (typeof updateLayout === 'function') updateLayout();
+			return chaos;
+		};
 	
   	chaos.data = function(value) {
-		if (!arguments.length) return data;
-		data = value;
-		if (typeof updateData === 'function') updateData();
-		return chaos;
-	};
+			if (!arguments.length) return data;
+			data = value;
+			if (typeof updateData === 'function') updateData();
+			return chaos;
+		};
 	
 	chaos.key = function(key, value, format) {
 		if (!arguments.length) return {highlightKey,xKey,xFormat,xValues,xRegions,importantKeys};
-
+		
 		highlightKey = value;
 		xKey = key;
 		xFormat = format;
@@ -340,8 +279,8 @@ export default function() {
 		if(importantKeys.length < Object.keys(xRegions).length){
 			importantKeys.push("other");
 		}
-
-		if (typeof updateKey === 'function') updateKey(key, value, format);
+		
+		if (typeof updateKey === 'function') updateKey();
 		return chaos;
 	};
 
