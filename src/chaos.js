@@ -38,18 +38,6 @@ export default function() {
 	}
 	var importantKeys = Object.keys(xRegions)
 		.sort((a, b) => xRegions[b] - xRegions[a]).slice(0, 9);
-	var xAxisPlacement = function(d,i){
-				var key = grabKey(d);
-				var xValue = key;
-				var xAxisOffset = getXAxisOffset(xValue);
-				var reducedX = i / importantKeys.length;
-
-				return x(xAxisOffset + reducedX);
-			}
-	var getXAxisOffset = function(d){
-		var xAxisOffset = (importantKeys.indexOf(d) / importantKeys.length) * data.length;
-		return xAxisOffset;
-	}
 
 	if(importantKeys.length < Object.keys(xRegions).length){
 		importantKeys.push("other");
@@ -190,6 +178,20 @@ export default function() {
 					});
 
 				return highlightKey;
+			}
+
+			function xAxisPlacement(d,i){
+				var key = grabKey(d);
+				var xValue = key;
+				var xAxisOffset = getXAxisOffset(xValue);
+				var reducedX = i / importantKeys.length;
+
+				return x(xAxisOffset + reducedX);
+			}
+			
+			function getXAxisOffset(d){
+				var xAxisOffset = (importantKeys.indexOf(d) / importantKeys.length) * data.length;
+				return xAxisOffset;
 			}
 
 			function updateKey(key, value, format){
