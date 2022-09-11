@@ -5,7 +5,6 @@ import { select as d3Select } from 'd3-selection';
 import { line as d3Line } from 'd3-shape';
 import 'd3-transition';
 
-
 export default function() {
   var margin = {top: 30, right: 80, bottom: 70, left: 100};
 	var height = 500;
@@ -22,17 +21,17 @@ export default function() {
 
 	var data = [];
 	var xKey = "";
-	var xFormat = function(d){
+	var xLabelFormat = function(d){
 		return d;
 	};
 
-	var xValues = data.map(item => xFormat(item[xKey]));
+	var xValues = data.map(item => xLabelFormat(item[xKey]));
 	var xRegions = xValues.reduce((acc, d) => {
 		acc[d] = d in acc ? acc[d] + 1 : 1;
 		return acc;
 	}, {});
 	var grabKey = function(d){
-		return importantKeys.indexOf(xFormat(d[xKey])) >= 0 ? xFormat(d[xKey]) : "other";
+		return importantKeys.indexOf(xLabelFormat(d[xKey])) >= 0 ? xLabelFormat(d[xKey]) : "other";
 	}
 	var importantKeys = Object.keys(xRegions)
 		.sort((a, b) => xRegions[b] - xRegions[a]).slice(0, 9);
@@ -260,14 +259,14 @@ export default function() {
 			return chaos;
 		};
 	
-	chaos.key = function(key, value, format) {
-		if (!arguments.length) return {highlightKey,xKey,xFormat,xValues,xRegions,importantKeys};
+	chaos.key = function(keyObject) {
+		if (!arguments.length) return {highlightKey,xKey,xLabelFormat};
 		
-		highlightKey = value;
-		xKey = key;
-		xFormat = format;
+		({highlightKey, xKey, xLabelFormat} = keyObject)
 		
-		xValues = data.map(item => xFormat(item[xKey]));
+		console.log(xLabelFormat);
+		
+		xValues = data.map(item => xLabelFormat(item[xKey]));
 		xRegions = xValues.reduce((acc, d) => {
 			acc[d] = d in acc ? acc[d] + 1 : 1;
 			return acc;
